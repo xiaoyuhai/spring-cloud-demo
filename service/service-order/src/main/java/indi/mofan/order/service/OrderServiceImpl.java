@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,12 +26,14 @@ public class OrderServiceImpl implements OrderService {
     private DiscoveryClient discoveryClient;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private LoadBalancerClient loadBalancerClient;
 
     @Override
     public Order createOrder(Long productId, Long userId) {
         Order order = new Order();
         order.setId(productId);
-        Product product = getProductFromRemote(productId);
+        Product product = getProductFromRemoteWithLoadBalancerAnnotation(productId);
         BigDecimal totalAmount = product.getPrice().multiply(new BigDecimal(product.getNum()));
         order.setTotalAmount(totalAmount);
         order.setUserId(userId);
@@ -42,9 +45,26 @@ public class OrderServiceImpl implements OrderService {
 
     private Product getProductFromRemote(Long productId) {
         List<ServiceInstance> instances = discoveryClient.getInstances("service-product");
-        ServiceInstance first = instances.getFirst();
+        ServiceInstance instance = instances.getFirst();
         // 远程 url
-        String url = "http://" + first.getHost() + ":" + first.getPort() + "/product/" + productId;
+        String url = "http://" + instance.getHost() + ":" + instance.getPort() + "/product/" + productId;
+        log.info("远程请求: {}", url);
+        // 给远程发送请求
+        return restTemplate.getForObject(url, Product.class);
+    }
+
+    private Product getProductFromRemoteWithLoadBalancer(Long productId) {
+        ServiceInstance instance = loadBalancerClient.choose("service-product");
+        // 远程 url
+        String url = "http://" + instance.getHost() + ":" + instance.getPort() + "/product/" + productId;
+        log.info("远程请求: {}", url);
+        // 给远程发送请求
+        return restTemplate.getForObject(url, Product.class);
+    }
+
+    private Product getProductFromRemoteWithLoadBalancerAnnotation(Long productId) {
+        // 给远程发送请求：service-product 会被动态替换
+        String url = "http://service-product/product/" + productId;
         log.info("远程请求: {}", url);
         // 给远程发送请求
         return restTemplate.getForObject(url, Product.class);
