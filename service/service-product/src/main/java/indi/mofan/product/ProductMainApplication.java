@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.product;
 
 
 import org.springframework.boot.SpringApplication;
