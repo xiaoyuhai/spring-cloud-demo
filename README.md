@@ -97,3 +97,25 @@ private Product getProductFromRemoteWithLoadBalancerAnnotation(Long productId) {
 如果存在多个相同的配置信息，那么：
 
 ![配置信息优先级](/img/配置信息优先级.svg)
+
+## 1.7 数据隔离
+
+一个项目通常部署在多套环境上，比如 dev、test、prod。
+
+项目中每个微服务的配置信息在每套环境上的值可能不一样，要求项目可以通过切换环境，加载本环境的配置。
+
+如果要完成以上需求，其中的难点是如何：
+
+- 区分多套环境
+- 区分多种微服务
+- 区分多种配置
+- 按需加载配置
+
+![Nacos数据隔离解决方案](/img/Nacos数据隔离解决方案.svg)
+
+Nacos 的解决方案：
+
+- 用名称空间区分多套环境
+- 用 Group 区分多种微服务
+- 用 Data-id 区分多种配置
+- 使用 SpringBoot 激活对应环境的配置
