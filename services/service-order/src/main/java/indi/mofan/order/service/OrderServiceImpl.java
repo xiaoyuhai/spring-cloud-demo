@@ -2,6 +2,7 @@ package indi.mofan.order.service;
 
 
 import indi.mofan.order.bean.Order;
+import indi.mofan.order.feign.ProductFeignClient;
 import indi.mofan.product.bean.Product;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +29,15 @@ public class OrderServiceImpl implements OrderService {
     private RestTemplate restTemplate;
     @Autowired
     private LoadBalancerClient loadBalancerClient;
+    @Autowired
+    private ProductFeignClient productFeignClient;
 
     @Override
     public Order createOrder(Long productId, Long userId) {
         Order order = new Order();
         order.setId(productId);
-        Product product = getProductFromRemoteWithLoadBalancerAnnotation(productId);
+        // Product product = getProductFromRemoteWithLoadBalancerAnnotation(productId);
+        Product product = productFeignClient.getProductById(productId);
         BigDecimal totalAmount = product.getPrice().multiply(new BigDecimal(product.getNum()));
         order.setTotalAmount(totalAmount);
         order.setUserId(userId);

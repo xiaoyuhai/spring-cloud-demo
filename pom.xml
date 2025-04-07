@@ -14,7 +14,7 @@
     <name>spring-cloud-demo</name>
     <description>spring-cloud-demo</description>
     <modules>
-        <module>service</module>
+        <module>services</module>
         <module>model</module>
     </modules>
     <packaging>pom</packaging>
@@ -26,6 +26,7 @@
         <spring-cloud-alibaba.version>2023.0.3.2</spring-cloud-alibaba.version>
         <lombok.version>1.18.36</lombok.version>
         <assertj.version>3.27.2</assertj.version>
+        <json-unit-assertj.version>4.1.0</json-unit-assertj.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -47,6 +48,12 @@
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.javacrumbs.json-unit</groupId>
+                <artifactId>json-unit-assertj</artifactId>
+                <version>${json-unit-assertj.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

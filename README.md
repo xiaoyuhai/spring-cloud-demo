@@ -119,3 +119,41 @@ Nacos 的解决方案：
 - 用 Group 区分多种微服务
 - 用 Data-id 区分多种配置
 - 使用 SpringBoot 激活对应环境的配置
+
+# 2. OpenFeign
+
+## 2.1 简介与使用
+
+OpenFeign，是一种 Declarative REST Client，即声明式 Rest 客户端，与之对应的是编程式 Rest 客户端，比如 RestTemplate。
+
+OpenFeign 由注解驱动：
+
+- 指定远程地址：`@FeignClien`
+- 指定请求方式：`@GetMapping`、`@PostMapping`、`@DeleteMapping`...
+- 指定携带数据：`@RequestHeader`、`@RequestParam`、`@RequestBody`...
+- 指定返回结果：响应模式
+
+其中的 `@GetMapping` 等注解可以沿用 Spring MVC：
+
+- 当它们标记在 Controller 上时，用于接收请求
+- 当他们标记在 FeignClien 上时，用于发送请求
+
+使用时引入以下依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+
+在主启动类上使用以下注解：
+
+```java
+@EnableFeignClients
+```
+
+![OpenFeign的远程调用](/img/OpenFeign的远程调用.svg)
+
+- 远程调用注册中心中的服务参考：`ProductFeignClient`
+- 远程调用指定 URL 参考：`MockUrlFeignClient`
