@@ -157,3 +157,68 @@ OpenFeign 由注解驱动：
 
 - 远程调用注册中心中的服务参考：`ProductFeignClient`
 - 远程调用指定 URL 参考：`MockUrlFeignClient`
+
+## 2.2 小技巧
+
+如何编写好 OpenFeign 声明式的远程调用接口：
+
+- 针对业务 API：直接复制对方的 Controller 签名即可；
+- 第三方 API：根据接口文档确定请求如何发
+
+## 2.3 一道面试题
+
+客户端负载均衡与服务端负载均衡的区别：
+
+![客户端负载均衡与服务端负载均衡](/img/客户端负载均衡与服务端负载均衡.svg)
+
+## 2.4 进阶用法
+
+> 日志
+
+在配置文件中指定 feign 接口所在包的日志级别：
+
+```yaml
+logging:
+  level:
+    # 指定 feign 接口所在的包的日志级别为 debug 级别
+    indi.mofan.order.feign: debug
+```
+
+向 Spring 容器中注册 `feign.Logger.Level` 对象：
+
+```java
+@Bean
+public Logger.Level feignlogLevel() {
+    // 指定 OpenFeign 发请求时，日志级别为 FULL
+    return Logger.Level.FULL;
+}
+```
+
+> 超时控制
+
+连接超时（connectTimeout），默认 10 秒。
+
+读取超时（readTimeout），默认 60 秒。
+
+如果需要修改默认超时时间，在配置文件中进行如下配置：
+
+```yaml
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          # 默认配置
+          default:
+            logger-level: full
+            connect-timeout: 1000
+            read-timeout: 2000
+          # 具体 feign 客户端的超时配置
+          service-product:
+            logger-level: full
+            # 连接超时，3000 毫秒
+            connect-timeout: 3000
+            # 读取超时，5000 毫秒
+            read-timeout: 5000
+```
+
