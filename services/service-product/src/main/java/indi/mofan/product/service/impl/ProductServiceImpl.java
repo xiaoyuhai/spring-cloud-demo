@@ -7,7 +7,6 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author mofan
@@ -24,7 +23,7 @@ public class ProductServiceImpl implements ProductService {
         product.setProductName("apple-" + id);
         product.setNum(2);
 
-        TimeUnit.SECONDS.sleep(100);
+        // TimeUnit.SECONDS.sleep(100);
 
         return product;
     }

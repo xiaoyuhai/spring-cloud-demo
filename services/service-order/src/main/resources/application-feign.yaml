@@ -20,3 +20,11 @@ spring:
             connect-timeout: 3000
             # 读取超时，5000 毫秒
             read-timeout: 5000
+#            该请求拦截器仅对当前客户端有效
+#            request-interceptors:
+#              - indi.mofan.order.interceptor.XTokenRequestInterceptor
+
+# 开启熔断
+feign:
+  sentinel:
+    enabled: true

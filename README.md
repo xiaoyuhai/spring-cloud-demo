@@ -222,3 +222,134 @@ spring:
             read-timeout: 5000
 ```
 
+> 重试机制
+
+远程调用超时失败后，还可以进行多次尝试，如果某次成功则返回 ok，如果多次尝试后依然失败则结束调用，返回错误。
+
+OpenFeign 底层默认使用 `NEVER_RETRY`，即从不重试策略。
+
+向 Spring 容器中添加 `Retryer` 类型的 Bean：
+
+```java
+@Bean
+public Retryer retryer() {
+    return new Retryer.Default();
+}
+```
+
+这里使用 OpenFeign 的默认实现 `Retryer.Default`，在这种默认实现下：
+
+```java
+public Default() {
+    this(100L, TimeUnit.SECONDS.toMillis(1L), 5);
+}
+```
+
+OpenFeign 的重试规则是：
+
+- 重试间隔 100ms
+- 最大重试间隔 1s。新一次重试间隔是上一次重试间隔的 1.5 倍，但不能超过最大重试间隔。
+- 最多重试 5 次
+
+> 拦截器
+
+![OpenFeign的拦截器](/img/OpenFeign的拦截器.svg)
+
+以请求拦截器为例，自定义的请求拦截器需要实现 `RequestInterceptor` 接口，并重写 `apply()` 方法：
+
+```java
+package indi.mofan.order.interceptor;
+
+public class XTokenRequestInterceptor implements RequestInterceptor {
+    /**
+     * 请求拦截器
+     *
+     * @param template 封装本次请求的详细信息
+     */
+    @Override
+    public void apply(RequestTemplate template) {
+        System.out.println("XTokenRequestInterceptor ...");
+        template.header("X-Token", UUID.randomUUID().toString());
+    }
+}
+```
+
+要想要该拦截器生效有两种方法：
+
+1. 在配置文件中配置对应 Feign 客户端的请求拦截器，此时该拦截器只对指定的 Feign 客户端生效
+
+   ```yaml
+   spring:
+     cloud:
+       openfeign:
+         client:
+           config:
+             # 具体 feign 客户端
+             service-product:
+               # 该请求拦截器仅对当前客户端有效
+               request-interceptors:
+                 - indi.mofan.order.interceptor.XTokenRequestInterceptor
+   ```
+
+2. 还可以直接将自定义的请求拦截器添加到 Spring 容器中，此时该拦截器对服务内的所有 Feign 客户端生效
+
+   ```java
+   @Component
+   public class XTokenRequestInterceptor implements RequestInterceptor {
+       // --snip--
+   }
+   ```
+
+> Fallback
+
+![OpenFeign的Fallback](/img/OpenFeign的Fallback.svg)
+
+Fallback，即兜底返回。
+
+注意，此功能需要整合 Sentinel 才能实现。
+
+因此需要先导入 Sentinel 依赖：
+
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+```
+
+并在需要进行 Fallback 的服务的配置文件中开启配置：
+
+```yaml
+feign:
+  sentinel:
+    enabled: true
+```
+
+现在需要对 Feign 客户端 `ProductFeignClient` 配置 Fallback，那么需要先实现 `ProductFeignClient` 编写兜底返回逻辑，并将其交由 Spring 管理：
+
+```java
+@Component
+public class ProductFeignClientFallback implements ProductFeignClient {
+    @Override
+    public Product getProductById(Long id) {
+        System.out.println("Fallback...");
+        Product product = new Product();
+        product.setId(id);
+        product.setPrice(new BigDecimal("0"));
+        product.setProductName("未知商品");
+        product.setNum(0);
+        return product;
+    }
+}
+```
+
+之后回到对应的 Feign 客户端，配置 Fallback：
+
+```java
+@FeignClient(value = "service-product", fallback = ProductFeignClientFallback.class)
+public interface ProductFeignClient {
+
+    @GetMapping("/product/{id}")
+    Product getProductById(@PathVariable("id") Long id);
+}
+```

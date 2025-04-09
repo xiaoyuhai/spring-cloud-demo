@@ -1,6 +1,7 @@
 package indi.mofan.order.feign;
 
 
+import indi.mofan.order.feign.fallback.ProductFeignClientFallback;
 import indi.mofan.product.bean.Product;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * @author mofan
  * @date 2025/4/7 22:08
  */
-@FeignClient(value = "service-product")
+@FeignClient(value = "service-product", fallback = ProductFeignClientFallback.class)
 public interface ProductFeignClient {
 
     @GetMapping("/product/{id}")
