@@ -1,6 +1,7 @@
 package indi.mofan.order.service;
 
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import indi.mofan.order.bean.Order;
 import indi.mofan.order.feign.ProductFeignClient;
 import indi.mofan.product.bean.Product;
@@ -33,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private ProductFeignClient productFeignClient;
 
     @Override
+    @SentinelResource("createOrder")
     public Order createOrder(Long productId, Long userId) {
         Order order = new Order();
         order.setId(productId);

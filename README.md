@@ -353,3 +353,78 @@ public interface ProductFeignClient {
     Product getProductById(@PathVariable("id") Long id);
 }
 ```
+
+# 3. Sentinel
+
+## 3.1 工作原理
+
+随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Spring Cloud Alibaba Sentinel 以流量为切入点，从流量控制、流量路由、熔断降级、系统自适应过载保护、热点流量防护等多个维度保护服务的稳定性。
+
+![Sentinel架构原理](/img/Sentinel架构原理.svg)
+
+定义规则：
+
+- 主流框架自动适配（Web Servlet、Dubbo、Spring Cloud、gRPC、Spring WebFlux、Reactor），所有 Web 接口均为资源 
+
+- 编程式：SphU API
+
+- 声明式：`@SentinelResource`
+
+定义资源：
+
+- 流量控制（FlowRule）
+
+- 熔断降级（DegradeRule）
+
+- 系统保护（SystemRule）
+
+- 来源访问控制（AuthorityRule）
+
+- 热点参数（ParamFlowRule）
+
+![Sentinel工作原理](/img/Sentinel工作原理.svg)
+
+## 3.2 整合 Sentinel
+
+> 启动 Dashboard
+
+前往 Sentinel GitHub Realease 页下载 Sentinel Dashboard，这里选择 1.8.8 版本，因此下载 `sentinel-dashboard-1.8.8.jar`。
+
+在 `sentinel-dashboard-1.8.8.jar` 所在的目录运行以下命令，启动 Dashboard：
+
+```shell
+java -jar sentinel-dashboard-1.8.8.jar
+```
+
+启动完成后，浏览器访问 `http://localhost:8080/`，默认用户与密码均为 `sentinel`。
+
+> 服务整合 Sentinel
+
+引入依赖：
+
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+```
+
+配置文件中添加：
+
+```yaml
+spring:
+  application:
+    name: service-product
+  cloud:
+    sentinel:
+      transport:
+        # 控制台地址
+        dashboard: localhost:8080
+      # 立即加载服务  
+      eager: true
+```
+
+配置完成后启动对应服务，再前往 Sentinel Dashboard 查看，能够看到对应服务信息。
+
+可以在一个方法上使用 `@SentinelResource` 注解，将其标记为一个「资源」，当方法被调用时，能够在 Dashboard 的「簇点链路」上找到对应的资源，之后在界面上完成对资源的流控、熔断、热点、授权等操作。
+

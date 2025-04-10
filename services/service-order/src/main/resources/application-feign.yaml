@@ -23,6 +23,10 @@ spring:
 #            该请求拦截器仅对当前客户端有效
 #            request-interceptors:
 #              - indi.mofan.order.interceptor.XTokenRequestInterceptor
+    sentinel:
+      transport:
+        dashboard: localhost:8080
+      eager: true
 
 # 开启熔断
 feign:
