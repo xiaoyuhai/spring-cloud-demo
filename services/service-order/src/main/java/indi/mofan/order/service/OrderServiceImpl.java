@@ -2,6 +2,7 @@ package indi.mofan.order.service;
 
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import indi.mofan.order.bean.Order;
 import indi.mofan.order.feign.ProductFeignClient;
 import indi.mofan.product.bean.Product;
@@ -34,10 +35,10 @@ public class OrderServiceImpl implements OrderService {
     private ProductFeignClient productFeignClient;
 
     @Override
-    @SentinelResource("createOrder")
+    @SentinelResource(value = "createOrder", blockHandler = "createOrderFallback")
     public Order createOrder(Long productId, Long userId) {
         Order order = new Order();
-        order.setId(productId);
+        order.setId(1L);
         // Product product = getProductFromRemoteWithLoadBalancerAnnotation(productId);
         Product product = productFeignClient.getProductById(productId);
         BigDecimal totalAmount = product.getPrice().multiply(new BigDecimal(product.getNum()));
@@ -46,6 +47,19 @@ public class OrderServiceImpl implements OrderService {
         order.setNickname("mofan");
         order.setAddress("Chengdu");
         order.setProductList(List.of(product));
+        return order;
+    }
+
+    /**
+     * 指定兜底回调
+     */
+    public Order createOrderFallback(Long productId, Long userId, BlockException e) {
+        Order order = new Order();
+        order.setId(0L);
+        order.setTotalAmount(new BigDecimal("0"));
+        order.setUserId(userId);
+        order.setNickname("未知用户");
+        order.setAddress("异常信息: " + e.getClass());
         return order;
     }
 

@@ -428,3 +428,108 @@ spring:
 
 可以在一个方法上使用 `@SentinelResource` 注解，将其标记为一个「资源」，当方法被调用时，能够在 Dashboard 的「簇点链路」上找到对应的资源，之后在界面上完成对资源的流控、熔断、热点、授权等操作。
 
+## 3.3 异常处理
+
+![Sentinel异常处理](/img/Sentinel异常处理.svg)
+
+> Web 接口
+
+当 Web 接口作为资源被流控时，默认情况下会在页面显示：
+
+<pre>
+Blocked by Sentinel (flow limiting)
+</pre>
+
+如果需要自定义异常处理，可以实现 `BlockExceptionHandler` 接口，并将实现类交给 Spring 管理：
+
+```java
+@Component
+public class MyBlockExceptionHandler implements BlockExceptionHandler {
+
+    private final ObjectMapper objectMapper;
+
+    public MyBlockExceptionHandler(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void handle(HttpServletRequest request,
+                       HttpServletResponse response,
+                       String resourceName,
+                       BlockException e) throws Exception {
+        response.setContentType("application/json;charset=utf-8");
+        PrintWriter writer = response.getWriter();
+
+        R error = R.error(500, resourceName + " 被 Sentinel 限制了, 原因: " + e.getClass());
+
+        String json = objectMapper.writeValueAsString(error);
+        writer.write(json);
+
+        writer.flush();
+        writer.close();
+    }
+}
+```
+
+以 `/create` 接口为例，当其被流控时，页面显示：
+
+```json
+{
+    "code": 500,
+    "message": "/create 被 Sentinel 限制了, 原因: class com.alibaba.csp.sentinel.slots.block.flow.FlowException",
+    "data": null
+}
+```
+
+> `@SentinelResource`
+
+当 `@SentinelResource` 注解标记的资源被流控时，默认返回 500 错误页。
+
+如果需要自定义异常处理，一般可以增加 `@SentinelResource` 注解的以下任意配置：
+
+- `blockHandler`
+- `fallback`
+- `defaultFallback`
+
+以 `blockHandler` 为例：
+
+```java
+@SentinelResource(value = "createOrder", blockHandler = "createOrderFallback")
+public Order createOrder(Long productId, Long userId) {
+    // --snip--
+}
+```
+
+在当前类中创建名称为 `blockHandler` 值的方法，并且返回值类型、参数信息与 `@SentinelResource` 标记的方法一致（可以额外增加一个 `BlockException` 类型的参数）：
+
+```java
+/**
+ * 指定兜底回调
+ */
+public Order createOrderFallback(Long productId, Long userId, BlockException e) {
+    Order order = new Order();
+    order.setId(0L);
+    order.setTotalAmount(new BigDecimal("0"));
+    order.setUserId(userId);
+    order.setNickname("未知用户");
+    order.setAddress("异常信息: " + e.getClass());
+    return order;
+}
+```
+
+当资源被流控时，执行 `blockHandler` 指定的方法：
+
+```json
+{
+    "id": 0,
+    "totalAmount": 0,
+    "userId": 666,
+    "nickname": "未知用户",
+    "address": "异常信息: class com.alibaba.csp.sentinel.slots.block.flow.FlowException",
+    "productList": null
+}
+```
+
+> Feign 接口
+
+当 Feign 接口作为资源并被流控时，如果调用的 Feign 接口指定了 `fallback`，那么就会使用 Feign 接口的 `fallback` 进行异常处理，否则由 SpringBoot 进行全局异常处理。
