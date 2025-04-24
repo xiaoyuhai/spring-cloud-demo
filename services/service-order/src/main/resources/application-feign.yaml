@@ -27,6 +27,8 @@ spring:
       transport:
         dashboard: localhost:8080
       eager: true
+      # 支持流控模式的链路模式
+      web-context-unify: false
 
 # 开启熔断
 feign:
