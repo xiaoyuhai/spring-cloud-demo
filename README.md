@@ -356,6 +356,8 @@ public interface ProductFeignClient {
 
 # 3. Sentinel
 
+官方文档：[Sentinel](https://sentinelguard.io/zh-cn/docs/introduction.html)
+
 ## 3.1 工作原理
 
 随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Spring Cloud Alibaba Sentinel 以流量为切入点，从流量控制、流量路由、熔断降级、系统自适应过载保护、热点流量防护等多个维度保护服务的稳定性。
@@ -591,4 +593,155 @@ Sentinel 的流控阈值规则有两种：
 | 快速失败 | 直接拒绝超出阈值的请求 | 明确系统处理能力并快速保护 |   固定阈值   |    突发流量    |
 | Warm Up  |      阈值逐步提升      | 冷启动或流量突增的平滑过渡 |   动态提升   | 逐步增长的流量 |
 | 排队等待 |      匀速处理请求      | 服务处理均匀，避免突发压力 |   固定阈值   |   均匀的流量   |
+
+## 3.5 熔断规则
+
+熔断规则，即 DegradeRule。
+
+使用熔断规则可以配置熔断降级，用于：
+
+- 切断不稳定调用
+- 快速返回不积压
+- 避免雪崩效应
+
+**最佳实践：** 熔断降级作为保护自身的手段，通常在客户端（调用端）进行配置。
+
+熔断降级里的核心组件是「断路器」，其工作原理如下：
+
+![断路器工作原理](/img/断路器工作原理.svg)
+
+Sentinel 提供了三种熔断策略：
+
+1. 慢调用比例
+2. 异常比例
+3. 异常数
+
+> 慢调用比例
+
+![配置慢调用比例的熔断规则](/img/配置慢调用比例的熔断规则.png)
+
+在 5000ms 内，有 80%（0.8 的比例阈值）的请求的最大响应时间超过 1000ms，则进行 30s 的熔断。
+
+如果 5000ms 内，请求数不超过 5，就算达到熔断规则，也不进行熔断。
+
+> 异常比例
+
+在远程调用的目标接口里添加 `int i = 1 / 0;` 模拟远程调用异常。
+
+此时尚未配置任何熔断规则，然后远程调用存在异常的接口，此时会触发使用 OpenFeign 配置的兜底回调。
+
+换句话说，没有配置任何熔断规则可以触发兜底回调，而配置熔断规则也是为了触发兜底回调，那岂不是配不配置熔断规则都可以？
+
+![有无熔断规则的比较](/img/有无熔断规则的比较.svg)
+
+当 A 服务向 B 服务发送请求时，远程调用的 B 服务接口中存在异常，此时触发兜底回调。
+
+在这个过程，由 A 服务发送的请求依旧会打到 B 服务上。
+
+而配置熔断规则后，A 服务发送的请求快速失败，立即出发兜底回调，不会再把请求打到 B 服务上。
+
+![配置异常比例的熔断规则](/img/配置异常比例的熔断规则.png)
+
+在 5000ms 内，有 80%（0.8 的比例阈值）的请求产生了异常，则进行 30s 的熔断。
+
+> 异常数
+
+![配置异常数的熔断规则](/img/配置异常数的熔断规则.png)
+
+「异常数」的熔断策略与「异常比例」很类似，只不过「异常数」是直接统计异常个数，就算统计时长内产生了一百万个请求，但只要有 10 个请求出现了异常，也会触发熔断。
+
+## 3.6 热点规则
+
+所谓热点，即经常访问的数据。很多时候希望统计某个热点数据中访问频次最高的 Top K 数据，并对其访问进行限制。比如：
+
+- 商品 ID 为参数，统计一段时间内最常购买的商品 ID 并进行限制
+- 用户 ID 为参数，针对一段时间内频繁访问的用户 ID 进行限制
+
+热点参数限流会统计传入参数中的热点参数，并根据配置的限流阈值与模式，对包含热点参数的资源调用进行限流。
+
+**热点参数限流可以看做是一种特殊的流量控制，仅对包含热点参数的资源调用生效。** 
+
+![Sentinel热点规则概述](/img/Sentinel热点规则概述.png)
+
+Sentinel 利用 LRU 策略统计最近最常访问的热点参数，结合令牌桶算法来进行参数级别的流控。
+
+> 在需求中学习
+
+现有如下需求：
+
+- 每个用户秒杀 QPS 不得超过 1（秒杀下单时，userId 级别）
+- 6 号用户是 vvip，不限制 QPS（例外情况）
+- 666 号商品是下架商品，不允许访问
+
+在 Sentinel GitHub Wiki 中指出：
+
+- 目前 Sentinel 自带的 adapter 仅 Dubbo 方法埋点带了热点参数，其它适配模块（如 Web）默认不支持热点规则，可通过自定义埋点方式指定新的资源名并传入希望的参数。注意自定义埋点的资源名不要和适配模块生成的资源名重复，否则会导致重复统计。
+
+```java
+@GetMapping("/seckill")
+@SentinelResource(value = "seckill-order", fallback = "seckillFallback")
+public Order seckill(@RequestParam(value = "userId", required = false) Long userId,
+                     @RequestParam(value = "productId", defaultValue = "1000") Long productId) {
+    Order order = orderService.createOrder(productId, userId);
+    order.setId(Long.MAX_VALUE);
+    return order;
+}
+
+public Order seckillFallback(Long userId,
+                             Long productId,
+                             // 使用 fallback，而不是 blockHandler
+                             // 最后一个参数类型是 Throwable，而不是 BlockException
+                             Throwable throwable) {
+    System.out.println("seckillFallback...");
+    Order order = new Order();
+    order.setId(productId);
+    order.setUserId(userId);
+    order.setAddress("异常信息: " + throwable.getClass());
+    return order;
+}
+```
+
+对 `seckill-order` 资源进行如下热点规则配置：
+
+![根据需求1配置热点规则](/img/根据需求1配置热点规则.png)
+
+这表示：访问 `seckill-order` 资源时，第一个参数（参数索引 0）在 1 秒的统计窗口时长下，其阈值为 1，也就是 QPS = 1。
+
+需要注意：携带此参数，则参与流控；不携带不流控。
+
+```java
+@GetMapping("/seckill")
+@SentinelResource(value = "seckill-order", fallback = "seckillFallback")
+public Order seckill(@RequestParam(value = "userId", defaultValue = "888") Long userId,
+                     @RequestParam(value = "productId", defaultValue = "1000") Long productId) {
+    // --snip--
+}
+```
+
+上述代码中，`userId` 的默认值为 `888`，也就是以 `http://localhost:8000/seckill?productId=777` 的形式进行访问时，`userId` 的值为 `888`，此时依旧传入了 `userId`，依旧触发流控。
+
+```java
+@GetMapping("/seckill")
+@SentinelResource(value = "seckill-order", fallback = "seckillFallback")
+public Order seckill(@RequestParam(value = "userId", required = false) Long userId,
+                     @RequestParam(value = "productId", defaultValue = "1000") Long productId) {
+    // --snip--
+}
+```
+
+上述代码中，`userId` 可以不传，当以 `http://localhost:8000/seckill?productId=777` 的形式进行访问时，`userId` 为 `null`，没有传入 `userId`，不会触发流控。
+
+经过上述配置，已经完成「每个用户秒杀 QPS 不得超过 1」的需求，但「6 号用户」是个例外：
+
+![根据需求2编辑热点规则](/img/根据需求2编辑热点规则.png)
+
+访问 `seckill-order` 资源时，第一个参数（参数索引 0）的类型是 `long`，当其值为 `6` 时，限流阈值为 `1000000`，变相不限制「6 号用户」的 QPS。
+
+现在还有最后一个需求「666 号商品是下架商品，不允许访问」，这其实相当于：对 666 号商品进行流控（限流阈值为 0，不允许访问），对其他商品不进行流控（或阈值非常大）。
+
+新增热点规则：
+
+![根据需求3配置热点规则](/img/根据需求3配置热点规则.png)
+
+访问 `seckill-order` 资源时，第二个参数（参数索引 1）在 1 秒的统计窗口时长下，其阈值为 1000000，这是一个无法达到的值，相当于不进行限流。但有一个例外：当其值为 666 时，限流阈值为 0，也就是不允许访问。
 
