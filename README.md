@@ -787,3 +787,146 @@ spring:
 Gateway 路由的工作原理如下：
 
 ![Gateway路由的工作原理](/img/Gateway路由的工作原理.svg)
+
+## 4.2 断言
+
+官方文档：[Route Predicate Factories](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway/request-predicates-factories.html)
+
+断言的两种书写方式：
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+          # id 全局唯一
+        - id: order-route
+          # 指定服务名称
+          uri: lb://service-order
+          # 指定断言规则，即路由匹配规则
+          # Fully Expanded Arguments
+          predicates:
+            - name: Path
+              args:
+                patterns: /api/order/**
+                matchTrailingSlash: true
+        - id: product-route
+          uri: lb://service-product
+          # Shortcut Configuration
+          predicates:
+            - Path=/api/product/**
+```
+
+在 Spring Cloud Gateway 的实现中，断言的实现都是 `RoutePredicateFactory` 接口的实现。
+
+因此除了直接查看官方文档外确定有哪些断言形式外，还可以通过查看 `RoutePredicateFactory` 的实现：
+
+- `HeaderRoutePredicateFactory`
+- `PathRoutePredicateFactory`
+- `ReadBodyRoutePredicateFactory`
+- `BeforeRoutePredicateFactory`
+- ...
+
+断言的名称可以通过去掉实现类名后的 `RoutePredicateFactory` 来确定，比如 `HeaderRoutePredicateFactory` 对应名为 `Header` 的断言。
+
+|         名称         |     参数（个数/类型）     |      作用      |
+| :------------------: | :-----------------------: | :------------: |
+|        After         |        1/datetime         | 在指定时间之后 |
+|        Before        |        1/datetime         | 在指定时间之前 |
+|       Between        |        2/datetime         | 在指定时间区间内 |
+|        Cookie        |      2/string,regexp      | 包含 cookie 名且必须匹配指定值 |
+|        Header        |      2/string,regexp      | 包含请求头且必须匹配指定值 |
+|         Host         |         N/string          | 请求 host 必须是指定枚举值 |
+|        Method        |         N/string          | 请求方式必须是指定枚举值 |
+|         Path         | 2/List&lt;String&gt;,bool | 请求路径满足规则，是否匹配最后的 `/` |
+|        Query         |      2/string,regexp      | 包含指定请求参数 |
+|      RemoteAddr      |      1/List&lt;String&gt;       | 请求来源于指定网络域（CIDR写法） |
+|        Weight        |       2/string,int        | 按指定权重负载均衡 |
+| XForwardedRemoteAddr |      1/List&lt;String&gt;       | 从 `X-Forwarded-For` 请求头中解析请求来源，并判断是否来源于指定网络域 |
+
+以 `Query` 为例：
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: bing-route
+          uri: https://cn.bing.com
+          predicates:
+            - name: Path
+              args:
+                patterns: /search
+            - name: Query
+              args:
+                param: q
+                regexp: haha
+```
+
+这表示：访问网关的 `/search` 地址，并且使用了名为 `q` 的请求参数，且值为 `haha`，才会将请求转到 `https://cn.bing.com`。
+
+尽管 Gateway 内置了许多断言规则，但依旧难以满足千变万化的需求。
+
+在上述规则的基础上，再指定一个名为 `Vip` 的断言规则，要求存在名为 `user` 的请求参数，并且值为 `mofan` 时才将请求跳转到 `https://cn.bing.com`：
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: bing-route
+          uri: https://cn.bing.com
+          predicates:
+            - name: Path
+              args:
+                patterns: /search
+            - name: Query
+              args:
+                param: q
+                regexp: haha
+            - Vip=user,mofan
+```
+
+自定义 `AbstractRoutePredicateFactory` 实现类 `VipRoutePredicateFactory`：
+
+```java
+/**
+ * @author mofan
+ * @date 2025/4/29 22:49
+ */
+@Component
+public class VipRoutePredicateFactory extends AbstractRoutePredicateFactory<VipRoutePredicateFactory.Config> {
+
+
+    public VipRoutePredicateFactory() {
+        super(Config.class);
+    }
+
+    @Override
+    public List<String> shortcutFieldOrder() {
+        return List.of("param", "value");
+    }
+
+    @Override
+    public Predicate<ServerWebExchange> apply(Config config) {
+        return (GatewayPredicate) serverWebExchange -> {
+            // localhost/search?q=haha&user=mofan
+            ServerHttpRequest request = serverWebExchange.getRequest();
+            String first = request.getQueryParams().getFirst(config.param);
+            return StringUtils.hasText(first) && first.equals(config.value);
+        };
+    }
+
+    @Validated
+    @Getter
+    @Setter
+    public static class Config {
+        @NotEmpty
+        private String param;
+        @NotEmpty
+        private String value;
+    }
+}
+```
+
+然后访问 `http://localhost/search?q=haha&user=mofan` 时，会跳转到 Bing 搜索 `haha`。
