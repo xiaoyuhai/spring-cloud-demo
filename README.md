@@ -745,3 +745,45 @@ public Order seckill(@RequestParam(value = "userId", required = false) Long user
 
 访问 `seckill-order` 资源时，第二个参数（参数索引 1）在 1 秒的统计窗口时长下，其阈值为 1000000，这是一个无法达到的值，相当于不进行限流。但有一个例外：当其值为 666 时，限流阈值为 0，也就是不允许访问。
 
+# 4. Gateway
+
+![Gateway的概述](/img/Gateway的概述.svg)
+
+## 4.1 路由
+
+需求：
+
+1. 客户端发送 `/api/order/**` 转到 `service-order`
+2. 客户端发送 `/api/product/**` 转到 `service-product`
+3. 以上转发有负载均衡效果
+
+配置路由规则时，可直接在配置文件中完成：
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: bing-route
+          uri: https://cn.bing.com
+          predicates:
+            - Path=/**
+          order: 10
+          # id 全局唯一
+        - id: order-route
+          # 指定服务名称
+          uri: lb://service-order
+          # 指定断言规则，即路由匹配规则
+          predicates:
+            - Path=/api/order/**
+          order: 1
+        - id: product-route
+          uri: lb://service-product
+          predicates:
+            - Path=/api/product/**
+          order: 2
+```
+
+Gateway 路由的工作原理如下：
+
+![Gateway路由的工作原理](/img/Gateway路由的工作原理.svg)

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * @author mofan
  * @date 2025/4/7 22:08
  */
-@FeignClient(value = "service-product", fallback = ProductFeignClientFallback.class)
+@FeignClient(value = "service-product", path = "/api/product", fallback = ProductFeignClientFallback.class)
 public interface ProductFeignClient {
 
     @GetMapping("/product/{id}")

@@ -1,0 +1,22 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: bing-route
+          uri: https://cn.bing.com
+          predicates:
+            - Path=/**
+          order: 10
+          # id 全局唯一
+        - id: order-route
+          # 指定服务名称
+          uri: lb://service-order
+          # 指定断言规则，即路由匹配规则
+          predicates:
+            - Path=/api/order/**
+          order: 1
+        - id: product-route
+          uri: lb://service-product
+          predicates:
+            - Path=/api/product/**
+          order: 2
