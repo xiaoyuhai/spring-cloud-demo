@@ -1,6 +1,12 @@
 spring:
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns: '*'
+            allowed-headers: '*'
+            allowedMethods: '*'
       routes:
         - id: bing-route
           uri: https://cn.bing.com
@@ -29,10 +35,19 @@ spring:
               args:
                 patterns: /api/order/**
                 matchTrailingSlash: true
+          filters:
+            # 类似把 /api/order/a/bc 重写为 /a/bc，移除路径前的 /api/order/
+            - RewritePath=/api/order/?(?<segment>.*), /$\{segment}
+            # 自定义过滤器
+            - OnceToken=X-Response-Token, uuid
           order: 1
         - id: product-route
           uri: lb://service-product
           # Shortcut Configuration
           predicates:
             - Path=/api/product/**
+          filters:
+            - RewritePath=/api/product/?(?<segment>.*), /$\{segment}
           order: 2
+      default-filters:
+        - AddResponseHeader=X-Response-Abc, 123
