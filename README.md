@@ -3,9 +3,9 @@ typora-copy-images-to: ./img
 typora-root-url: ./
 ---
 
-> 尚硅谷 SpringCloud 速通课程代码
-> 
 > 视频链接: [Spring Cloud 快速通关](https://www.bilibili.com/video/BV1UJc2ezEFU/)
+>
+> 采用 JDK21 实现，更推荐使用 JDK17。使用 JDK17 时，需要额外调整 pom 文件配置与相关 API。
 
 # 1. Nacos
 
@@ -1092,3 +1092,57 @@ spring:
 ```
 
  之后在请求的 Response Headers 中会增加一些允许跨域的信息。
+
+# 5. Seata
+
+在微服务项目中，一个操作往往会涉及多个不同的服务，每个服务又会连接不同的数据库：
+
+![一个操作涉及多个微服务](/img/一个操作涉及多个微服务.svg)
+
+此时应该如何保证多个事务的统一提交和统一回滚呢？
+
+[Seata](https://seata.apache.org/zh-cn/) 是一款开源的分布式事务解决方案，致力于在微服务架构下提供高性能和简单易用的分布式事务服务。
+
+现有如下交易流程：
+
+![Seata演示示例流程](/img/Seata演示示例流程.png)
+
+发起采购流程后，需要扣库存、生成订单、从账户中扣除指定金额，任一流程发生异常时，整个流程应当回滚。
+
+![Seata演示示例分布式事务解决方案.](/img/Seata演示示例分布式事务解决方案.png)
+
+- TC：Transaction Coordinator，即事务协调者。维护全局和分支事务的状态，驱动全局事务提交或回滚；
+- TM：Transaction Manager，即事务管理器。定义全局事务的范围，开始全局事务、提交或回滚全局事务；
+- RM：Resource Manager，即资源管理器。管理分支事务处理的资源，与 TC 交谈以注册分支事务和报告分支事务的状态，并驱动分支事务提交或回滚。
+
+[下载](https://seata.apache.org/zh-cn/download/seata-server)并解压 Seata 后，进入 `bin` 目录，使用 `seata-server.bat` 命令启动 Seata。
+
+下载的 Seata 版本保证与 pom 文件中引入的 `spring-cloud-alibaba-dependencies` 依赖中的 Seata 版本一致。
+
+在需要使用分布式事务的模块中添加依赖：
+
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+</dependency>
+```
+
+在需要使用 Seata 的模块中添加 Seata 的配置文件 `file.conf` ：
+
+```properties
+service {
+  #transaction service group mapping
+  vgroupMapping.default_tx_group = "default"
+  #only support when registry.type=file, please don't set multiple addresses
+  default.grouplist = "127.0.0.1:8091"
+  #degrade, current not support
+  enableDegrade = false
+  #disable seata
+  disableGlobalTransaction = false
+}
+```
+
+最后在最顶端的方法入口上使用 `@GlobalTransactional` 注解，由此开启全局事务。
+
+![Seata二阶提交协议](/img/Seata二阶提交协议.svg)
