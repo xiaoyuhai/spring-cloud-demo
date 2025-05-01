@@ -53,7 +53,7 @@ Nacos 是 Dynamic Naming and Configuration Service 的首字母简称，一个�
 
 远程调用基本流程：
 
-![远程调用基本流程](/img/远程调用基本流程.svg)
+![远程调用基本流程](/ATT/img/远程调用基本流程.svg)
 
 ## 1.5 负载均衡
 
@@ -79,7 +79,7 @@ private Product getProductFromRemoteWithLoadBalancerAnnotation(Long productId) {
 
 > 经典面试题：如果注册中心宕机，远程调用是否可以成功？
 
-![远程调用步骤](/img/远程调用步骤.svg)
+![远程调用步骤](/ATT/img/远程调用步骤.svg)
 
 - 如果从未调用过，此时注册中心宕机，调用会立即失败
 - 如果调用过：
@@ -96,7 +96,7 @@ private Product getProductFromRemoteWithLoadBalancerAnnotation(Long productId) {
 
 如果存在多个相同的配置信息，那么：
 
-![配置信息优先级](/img/配置信息优先级.svg)
+![配置信息优先级](/ATT/img/配置信息优先级.svg)
 
 ## 1.7 数据隔离
 
@@ -111,7 +111,7 @@ private Product getProductFromRemoteWithLoadBalancerAnnotation(Long productId) {
 - 区分多种配置
 - 按需加载配置
 
-![Nacos数据隔离解决方案](/img/Nacos数据隔离解决方案.svg)
+![Nacos数据隔离解决方案](/ATT/img/Nacos数据隔离解决方案.svg)
 
 Nacos 的解决方案：
 
@@ -153,7 +153,7 @@ OpenFeign 由注解驱动：
 @EnableFeignClients
 ```
 
-![OpenFeign的远程调用](/img/OpenFeign的远程调用.svg)
+![OpenFeign的远程调用](/ATT/img/OpenFeign的远程调用.svg)
 
 - 远程调用注册中心中的服务参考：`ProductFeignClient`
 - 远程调用指定 URL 参考：`MockUrlFeignClient`
@@ -169,7 +169,7 @@ OpenFeign 由注解驱动：
 
 客户端负载均衡与服务端负载均衡的区别：
 
-![客户端负载均衡与服务端负载均衡](/img/客户端负载均衡与服务端负载均衡.svg)
+![客户端负载均衡与服务端负载均衡](/ATT/img/客户端负载均衡与服务端负载均衡.svg)
 
 ## 2.4 进阶用法
 
@@ -253,7 +253,7 @@ OpenFeign 的重试规则是：
 
 > 拦截器
 
-![OpenFeign的拦截器](/img/OpenFeign的拦截器.svg)
+![OpenFeign的拦截器](/ATT/img/OpenFeign的拦截器.svg)
 
 以请求拦截器为例，自定义的请求拦截器需要实现 `RequestInterceptor` 接口，并重写 `apply()` 方法：
 
@@ -302,7 +302,7 @@ public class XTokenRequestInterceptor implements RequestInterceptor {
 
 > Fallback
 
-![OpenFeign的Fallback](/img/OpenFeign的Fallback.svg)
+![OpenFeign的Fallback](/ATT/img/OpenFeign的Fallback.svg)
 
 Fallback，即兜底返回。
 
@@ -362,7 +362,7 @@ public interface ProductFeignClient {
 
 随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Spring Cloud Alibaba Sentinel 以流量为切入点，从流量控制、流量路由、熔断降级、系统自适应过载保护、热点流量防护等多个维度保护服务的稳定性。
 
-![Sentinel架构原理](/img/Sentinel架构原理.svg)
+![Sentinel架构原理](/ATT/img/Sentinel架构原理.svg)
 
 定义规则：
 
@@ -384,7 +384,7 @@ public interface ProductFeignClient {
 
 - 热点参数（ParamFlowRule）
 
-![Sentinel工作原理](/img/Sentinel工作原理.svg)
+![Sentinel工作原理](/ATT/img/Sentinel工作原理.svg)
 
 ## 3.2 整合 Sentinel
 
@@ -432,7 +432,7 @@ spring:
 
 ## 3.3 异常处理
 
-![Sentinel异常处理](/img/Sentinel异常处理.svg)
+![Sentinel异常处理](/ATT/img/Sentinel异常处理.svg)
 
 > Web 接口
 
@@ -540,11 +540,11 @@ public Order createOrderFallback(Long productId, Long userId, BlockException e) 
 
 流控，即流量控制（FlowRule），用于限制多余请求，从而保护系统资源不被耗尽。
 
-![Sentinel流控](/img/Sentinel流控.svg)
+![Sentinel流控](/ATT/img/Sentinel流控.svg)
 
 > 阈值类型
 
-![Sentinel设置流控阈值类型](/img/Sentinel设置流控阈值类型.png)
+![Sentinel设置流控阈值类型](/ATT/img/Sentinel设置流控阈值类型.png)
 
 Sentinel 的流控阈值规则有两种：
 
@@ -558,7 +558,7 @@ Sentinel 的流控阈值规则有两种：
 
 > 流控模式
 
-![Sentinel的流控模式](/img/Sentinel的流控模式.png)
+![Sentinel的流控模式](/ATT/img/Sentinel的流控模式.png)
 
 配置流控规则时，可以点击下方的「高级选项」，在这里可以配置「流控模式」，共有三种可选项：
 
@@ -568,7 +568,7 @@ Sentinel 的流控阈值规则有两种：
 
 调用关系包括调用方、被调用方；一个方法又可能会调用其他方法，形成一个调用链路的层次关系；有了调用链路的统计信息，可以衍生出多种流量控制手段。
 
-![Sentinel流控模式](/img/Sentinel流控模式.svg)
+![Sentinel流控模式](/ATT/img/Sentinel流控模式.svg)
 
 | **维度** |        直接        |              关联              |            链路            |
 | :------: | :----------------: | :----------------------------: | :------------------------: |
@@ -586,7 +586,7 @@ Sentinel 的流控阈值规则有两种：
 2. Warm Up：初始阈值较低（默认是设定阈值的 $\frac{1}{3}$），随后在预热时间内逐步提升至设定阈值。例如设定阈值为 3 QPS、预热时间 3 秒，初始阈值为 1 QPS，3 秒内逐步升至 3。
 3. 排队等待：基于漏桶算法，请求进入队列后按固定间隔时间匀速处理。若请求的预期等待时间超过设定的超时时间，则拒绝请求。
 
-![Sentinel流控效果](/img/Sentinel流控效果.svg)
+![Sentinel流控效果](/ATT/img/Sentinel流控效果.svg)
 
 |   效果   |        核心机制        |          适用场景          | 阈值动态变化 |    流量特征    |
 | :------: | :--------------------: | :------------------------: | :----------: | :------------: |
@@ -608,7 +608,7 @@ Sentinel 的流控阈值规则有两种：
 
 熔断降级里的核心组件是「断路器」，其工作原理如下：
 
-![断路器工作原理](/img/断路器工作原理.svg)
+![断路器工作原理](/ATT/img/断路器工作原理.svg)
 
 Sentinel 提供了三种熔断策略：
 
@@ -618,7 +618,7 @@ Sentinel 提供了三种熔断策略：
 
 > 慢调用比例
 
-![配置慢调用比例的熔断规则](/img/配置慢调用比例的熔断规则.png)
+![配置慢调用比例的熔断规则](/ATT/img/配置慢调用比例的熔断规则.png)
 
 在 5000ms 内，有 80%（0.8 的比例阈值）的请求的最大响应时间超过 1000ms，则进行 30s 的熔断。
 
@@ -632,7 +632,7 @@ Sentinel 提供了三种熔断策略：
 
 换句话说，没有配置任何熔断规则可以触发兜底回调，而配置熔断规则也是为了触发兜底回调，那岂不是配不配置熔断规则都可以？
 
-![有无熔断规则的比较](/img/有无熔断规则的比较.svg)
+![有无熔断规则的比较](/ATT/img/有无熔断规则的比较.svg)
 
 当 A 服务向 B 服务发送请求时，远程调用的 B 服务接口中存在异常，此时触发兜底回调。
 
@@ -640,13 +640,13 @@ Sentinel 提供了三种熔断策略：
 
 而配置熔断规则后，A 服务发送的请求快速失败，立即出发兜底回调，不会再把请求打到 B 服务上。
 
-![配置异常比例的熔断规则](/img/配置异常比例的熔断规则.png)
+![配置异常比例的熔断规则](/ATT/img/配置异常比例的熔断规则.png)
 
 在 5000ms 内，有 80%（0.8 的比例阈值）的请求产生了异常，则进行 30s 的熔断。
 
 > 异常数
 
-![配置异常数的熔断规则](/img/配置异常数的熔断规则.png)
+![配置异常数的熔断规则](/ATT/img/配置异常数的熔断规则.png)
 
 「异常数」的熔断策略与「异常比例」很类似，只不过「异常数」是直接统计异常个数，就算统计时长内产生了一百万个请求，但只要有 10 个请求出现了异常，也会触发熔断。
 
@@ -661,7 +661,7 @@ Sentinel 提供了三种熔断策略：
 
 **热点参数限流可以看做是一种特殊的流量控制，仅对包含热点参数的资源调用生效。** 
 
-![Sentinel热点规则概述](/img/Sentinel热点规则概述.png)
+![Sentinel热点规则概述](/ATT/img/Sentinel热点规则概述.png)
 
 Sentinel 利用 LRU 策略统计最近最常访问的热点参数，结合令牌桶算法来进行参数级别的流控。
 
@@ -703,7 +703,7 @@ public Order seckillFallback(Long userId,
 
 对 `seckill-order` 资源进行如下热点规则配置：
 
-![根据需求1配置热点规则](/img/根据需求1配置热点规则.png)
+![根据需求1配置热点规则](/ATT/img/根据需求1配置热点规则.png)
 
 这表示：访问 `seckill-order` 资源时，第一个参数（参数索引 0）在 1 秒的统计窗口时长下，其阈值为 1，也就是 QPS = 1。
 
@@ -733,7 +733,7 @@ public Order seckill(@RequestParam(value = "userId", required = false) Long user
 
 经过上述配置，已经完成「每个用户秒杀 QPS 不得超过 1」的需求，但「6 号用户」是个例外：
 
-![根据需求2编辑热点规则](/img/根据需求2编辑热点规则.png)
+![根据需求2编辑热点规则](/ATT/img/根据需求2编辑热点规则.png)
 
 访问 `seckill-order` 资源时，第一个参数（参数索引 0）的类型是 `long`，当其值为 `6` 时，限流阈值为 `1000000`，变相不限制「6 号用户」的 QPS。
 
@@ -741,13 +741,13 @@ public Order seckill(@RequestParam(value = "userId", required = false) Long user
 
 新增热点规则：
 
-![根据需求3配置热点规则](/img/根据需求3配置热点规则.png)
+![根据需求3配置热点规则](/ATT/img/根据需求3配置热点规则.png)
 
 访问 `seckill-order` 资源时，第二个参数（参数索引 1）在 1 秒的统计窗口时长下，其阈值为 1000000，这是一个无法达到的值，相当于不进行限流。但有一个例外：当其值为 666 时，限流阈值为 0，也就是不允许访问。
 
 # 4. Gateway
 
-![Gateway的概述](/img/Gateway的概述.svg)
+![Gateway的概述](/ATT/img/Gateway的概述.svg)
 
 ## 4.1 路由
 
@@ -786,7 +786,7 @@ spring:
 
 Gateway 路由的工作原理如下：
 
-![Gateway路由的工作原理](/img/Gateway路由的工作原理.svg)
+![Gateway路由的工作原理](/ATT/img/Gateway路由的工作原理.svg)
 
 ## 4.2 断言
 
@@ -935,7 +935,7 @@ public class VipRoutePredicateFactory extends AbstractRoutePredicateFactory<VipR
 
 官方文档：[GatewayFilter Factories](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway/gatewayfilter-factories.html)
 
-![Gateway过滤器](/img/Gateway过滤器.svg)
+![Gateway过滤器](/ATT/img/Gateway过滤器.svg)
 
 先前在网关中配置了将 `/api/order/` 开头的请求转到 `service-order` 服务，并要求在 `service-order` 服务中也存在 `/api/order/` 开头的请求路径，比如 `/api/order/readDb`。如果该服务中原先并不存在 `/api/order/` 开头的请求，比如只有 `/readDb`，那么在以 `/api/order/readDb` 进行访问就会出现 404 错误。
 
@@ -943,7 +943,7 @@ public class VipRoutePredicateFactory extends AbstractRoutePredicateFactory<VipR
 
 Gateway 中内置了许多过滤器，其中有一个常用的过滤器名为：`RewritePath`，即路径重写。
 
-![RewritePath过滤器](/img/RewritePath过滤器.svg)
+![RewritePath过滤器](/ATT/img/RewritePath过滤器.svg)
 
 ```yaml
 spring:
@@ -1097,7 +1097,7 @@ spring:
 
 在微服务项目中，一个操作往往会涉及多个不同的服务，每个服务又会连接不同的数据库：
 
-![一个操作涉及多个微服务](/img/一个操作涉及多个微服务.svg)
+![一个操作涉及多个微服务](/ATT/img/一个操作涉及多个微服务.svg)
 
 此时应该如何保证多个事务的统一提交和统一回滚呢？
 
@@ -1105,11 +1105,11 @@ spring:
 
 现有如下交易流程：
 
-![Seata演示示例流程](/img/Seata演示示例流程.png)
+![Seata演示示例流程](/ATT/img/Seata演示示例流程.png)
 
 发起采购流程后，需要扣库存、生成订单、从账户中扣除指定金额，任一流程发生异常时，整个流程应当回滚。
 
-![Seata演示示例分布式事务解决方案.](/img/Seata演示示例分布式事务解决方案.png)
+![Seata演示示例分布式事务解决方案.](/ATT/img/Seata演示示例分布式事务解决方案.png)
 
 - TC：Transaction Coordinator，即事务协调者。维护全局和分支事务的状态，驱动全局事务提交或回滚；
 - TM：Transaction Manager，即事务管理器。定义全局事务的范围，开始全局事务、提交或回滚全局事务；
@@ -1145,4 +1145,4 @@ service {
 
 最后在最顶端的方法入口上使用 `@GlobalTransactional` 注解，由此开启全局事务。
 
-![Seata二阶提交协议](/img/Seata二阶提交协议.svg)
+![Seata二阶提交协议](/ATT/img/Seata二阶提交协议.svg)
