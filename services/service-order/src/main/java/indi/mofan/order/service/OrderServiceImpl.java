@@ -65,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
 
     private Product getProductFromRemote(Long productId) {
         List<ServiceInstance> instances = discoveryClient.getInstances("service-product");
-        ServiceInstance instance = instances.getFirst();
+        ServiceInstance instance = instances.get(0); // 修改这里：getFirst() -> get(0)
         // 远程 url
         String url = "http://" + instance.getHost() + ":" + instance.getPort() + "/product/" + productId;
         log.info("远程请求: {}", url);
